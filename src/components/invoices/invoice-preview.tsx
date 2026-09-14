@@ -2,6 +2,7 @@
 
 import { formatCurrency, formatDateLong } from '@/lib/format';
 import { hasBankingDetails } from '@/lib/banking';
+import { buildDescriptionLines } from '@/lib/invoice-description';
 import type { BusinessProfile, Client, InvoiceType } from '@/types/database';
 import type { BuilderLineItem } from './invoice-item-row';
 
@@ -18,6 +19,7 @@ interface InvoicePreviewProps {
   vatRate: number;
   total: number;
   description: string;
+  productDescriptions: Record<string, string>;
   notes: string;
   terms: string;
 }
@@ -31,11 +33,8 @@ function MetaLine({ label, value }: { label: string; value: string }) {
   );
 }
 
-export function InvoicePreview({ business, client, invoiceNumber, type, issueDate, dueDate, items, subtotal, vatAmount, vatRate, total, description, notes, terms }: InvoicePreviewProps) {
-  const descriptionLines = description
-    .split('\n')
-    .map((line) => line.trim())
-    .filter(Boolean);
+export function InvoicePreview({ business, client, invoiceNumber, type, issueDate, dueDate, items, subtotal, vatAmount, vatRate, total, description, productDescriptions, notes, terms }: InvoicePreviewProps) {
+  const descriptionLines = buildDescriptionLines(description, items, productDescriptions);
   const showBreakdown = vatAmount > 0;
 
   return (

@@ -31,6 +31,7 @@ export default function InvoiceDetailPage() {
   const [business, setBusiness] = useState<BusinessProfile | null>(null);
   const [client, setClient] = useState<Client | null>(null);
   const [items, setItems] = useState<InvoiceItem[]>([]);
+  const [productDescriptions, setProductDescriptions] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<null | 'download' | 'whatsapp' | 'status' | 'delete'>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -60,7 +61,21 @@ export default function InvoiceDetailPage() {
       if (cancelled) return;
       setBusiness(businessRes.data ?? null);
       setClient(clientRes.data ?? null);
-      setItems(itemsRes.data ?? []);
+      const invoiceItems = itemsRes.data ?? [];
+      setItems(invoiceItems);
+
+      const productIds = Array.from(new Set(invoiceItems.map((i) => i.product_id).filter((id): id is string => !!id)));
+      if (productIds.length > 0) {
+        const { data: productsData } = await supabase.from('products').select('id, description').in('id', productIds);
+        if (!cancelled) {
+          const map: Record<string, string> = {};
+          for (const p of productsData ?? []) {
+            if (p.description) map[p.id] = p.description;
+          }
+          setProductDescriptions(map);
+        }
+      }
+
       setLoading(false);
     })();
 
@@ -101,6 +116,7 @@ export default function InvoiceDetailPage() {
         total: Number(invoice.total),
         vatRate: Number(invoice.vat_rate),
         description: invoice.description,
+        productDescriptions,
         notes: invoice.notes,
         terms: invoice.terms,
       });
@@ -130,6 +146,7 @@ export default function InvoiceDetailPage() {
         total: Number(invoice.total),
         vatRate: Number(invoice.vat_rate),
         description: invoice.description,
+        productDescriptions,
         notes: invoice.notes,
         terms: invoice.terms,
       });
@@ -226,6 +243,7 @@ export default function InvoiceDetailPage() {
             vatRate={Number(invoice.vat_rate)}
             total={Number(invoice.total)}
             description={invoice.description ?? ''}
+            productDescriptions={productDescriptions}
             notes={invoice.notes ?? ''}
             terms={invoice.terms ?? ''}
           />

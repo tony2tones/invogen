@@ -140,20 +140,25 @@ export function InvoiceBuilder({ business, initial, defaultType, defaultClientId
   );
 
   const addCustomItem = () => setItems((prev) => [...prev, newLineItem()]);
-  const addProductItem = (product: Product) => {
+  const addProductItem = (product: Product) =>
     setItems((prev) => [
       ...prev,
       newLineItem({ product_id: product.id, description: product.name, unit_price: product.unit_price }),
     ]);
-    // Auto-fill the invoice description from the first product added, so the
-    // "what is this for" summary above the table doesn't need retyping — but
-    // never clobber something the user already wrote.
-    if (product.description && !description.trim()) {
-      setDescription(product.description);
-    }
-  };
   const updateItem = (localId: string, next: BuilderLineItem) => setItems((prev) => prev.map((i) => (i.localId === localId ? next : i)));
   const removeItem = (localId: string) => setItems((prev) => prev.filter((i) => i.localId !== localId));
+
+  // Every catalog product's own description shows on the invoice automatically
+  // wherever that product is used — not just copied into the editable
+  // description field for the first item added, which used to silently drop
+  // every product after the first and any manual edit the user had made.
+  const productDescriptions = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const product of products) {
+      if (product.description) map[product.id] = product.description;
+    }
+    return map;
+  }, [products]);
 
   const serializedItems = () =>
     items.map((i) => ({
@@ -278,6 +283,7 @@ export function InvoiceBuilder({ business, initial, defaultType, defaultClientId
           total,
           vatRate,
           description: description || null,
+          productDescriptions,
           notes: notes || null,
           terms: terms || null,
         });
@@ -317,6 +323,7 @@ export function InvoiceBuilder({ business, initial, defaultType, defaultClientId
       vatRate={vatRate}
       total={total}
       description={description}
+      productDescriptions={productDescriptions}
       notes={notes}
       terms={terms}
     />
@@ -366,7 +373,7 @@ export function InvoiceBuilder({ business, initial, defaultType, defaultClientId
             rows={2}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="What is this invoice for? Auto-fills from the first catalog item you add."
+            placeholder="Optional summary of the work. Catalog items with their own description show automatically below this."
           />
         </section>
 

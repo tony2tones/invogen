@@ -1,6 +1,7 @@
 import { Document, Page, View, Text, Image, StyleSheet, Font } from '@react-pdf/renderer';
 import { hasBankingDetails } from '@/lib/banking';
 import { formatDateLong } from '@/lib/format';
+import { buildDescriptionLines } from '@/lib/invoice-description';
 import type { BusinessProfile, Client, InvoiceItem, InvoiceType } from '@/types/database';
 
 Font.registerHyphenationCallback((word) => [word]);
@@ -53,12 +54,13 @@ interface InvoiceDocumentProps {
   status: string;
   issueDate: string;
   dueDate: string | null;
-  items: Pick<InvoiceItem, 'description' | 'quantity' | 'unit_price' | 'total'>[];
+  items: Pick<InvoiceItem, 'product_id' | 'description' | 'quantity' | 'unit_price' | 'total'>[];
   subtotal: number;
   vatAmount: number;
   total: number;
   vatRate: number;
   description: string | null;
+  productDescriptions: Record<string, string>;
   notes: string | null;
   terms: string | null;
 }
@@ -76,15 +78,13 @@ export function InvoiceDocument({
   total,
   vatRate,
   description,
+  productDescriptions,
   notes,
   terms,
 }: InvoiceDocumentProps) {
   const title = type === 'quote' ? 'Quotation' : 'Tax Invoice';
   const currency = business.currency || 'ZAR';
-  const descriptionLines = (description ?? '')
-    .split('\n')
-    .map((line) => line.trim())
-    .filter(Boolean);
+  const descriptionLines = buildDescriptionLines(description ?? '', items, productDescriptions);
   // A quote with no VAT (the common freelance case) doesn't need the extra
   // subtotal/VAT rows — a single bold total reads cleaner, matching how most
   // hand-written quotes look.

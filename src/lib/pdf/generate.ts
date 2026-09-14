@@ -12,12 +12,13 @@ export interface InvoicePdfInput {
   status: string;
   issueDate: string;
   dueDate: string | null;
-  items: Pick<InvoiceItem, 'description' | 'quantity' | 'unit_price' | 'total'>[];
+  items: Pick<InvoiceItem, 'product_id' | 'description' | 'quantity' | 'unit_price' | 'total'>[];
   subtotal: number;
   vatAmount: number;
   total: number;
   vatRate: number;
   description: string | null;
+  productDescriptions: Record<string, string>;
   notes: string | null;
   terms: string | null;
 }
