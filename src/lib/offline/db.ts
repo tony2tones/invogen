@@ -10,6 +10,7 @@ export interface PendingInvoicePayload {
   vat_amount: number;
   total: number;
   vat_rate: number;
+  description: string | null;
   notes: string | null;
   terms: string | null;
   due_date: string | null;

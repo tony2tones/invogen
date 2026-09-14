@@ -17,6 +17,7 @@ export interface InvoicePdfInput {
   vatAmount: number;
   total: number;
   vatRate: number;
+  description: string | null;
   notes: string | null;
   terms: string | null;
 }

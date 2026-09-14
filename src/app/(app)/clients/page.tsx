@@ -52,7 +52,7 @@ function ClientsPageInner() {
   if (!currentBusiness) return null;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-4 p-4">
+    <div className="mx-auto max-w-6xl space-y-4 p-4 lg:p-6">
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -70,33 +70,35 @@ function ClientsPageInner() {
         </Button>
       </div>
 
-      <div className="divide-y rounded-lg border bg-background">
-        {loading && <p className="p-4 text-sm text-muted-foreground">Loading…</p>}
-        {!loading && filtered.length === 0 && (
-          <div className="flex flex-col items-center gap-2 p-10 text-center text-muted-foreground">
-            <UserRound className="h-8 w-8" />
-            <p className="text-sm">{query ? 'No clients match your search.' : 'No clients yet. Add your first one.'}</p>
-          </div>
-        )}
-        {filtered.map((client) => (
-          <button
-            key={client.id}
-            onClick={() => {
-              setDetailClient(client);
-              setDetailOpen(true);
-            }}
-            className="flex w-full items-center gap-3 p-3 text-left hover:bg-muted/60"
-          >
-            <Avatar className="h-10 w-10 shrink-0">
-              <AvatarFallback className="bg-gray-900 text-white">{initials(client.name)}</AvatarFallback>
-            </Avatar>
-            <div className="min-w-0 flex-1">
-              <p className="truncate font-medium">{client.name}</p>
-              <p className="truncate text-sm text-muted-foreground">{client.phone ?? client.email ?? '—'}</p>
-            </div>
-          </button>
-        ))}
-      </div>
+      {loading && <p className="rounded-lg border bg-background p-4 text-sm text-muted-foreground">Loading…</p>}
+      {!loading && filtered.length === 0 && (
+        <div className="flex flex-col items-center gap-2 rounded-lg border bg-background p-10 text-center text-muted-foreground">
+          <UserRound className="h-8 w-8" />
+          <p className="text-sm">{query ? 'No clients match your search.' : 'No clients yet. Add your first one.'}</p>
+        </div>
+      )}
+      {!loading && filtered.length > 0 && (
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          {filtered.map((client) => (
+            <button
+              key={client.id}
+              onClick={() => {
+                setDetailClient(client);
+                setDetailOpen(true);
+              }}
+              className="flex w-full items-center gap-3 rounded-lg border bg-background p-3 text-left hover:bg-muted/60"
+            >
+              <Avatar className="h-10 w-10 shrink-0">
+                <AvatarFallback className="bg-gray-900 text-white">{initials(client.name)}</AvatarFallback>
+              </Avatar>
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-medium">{client.name}</p>
+                <p className="truncate text-sm text-muted-foreground">{client.phone ?? client.email ?? '—'}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
 
       <ClientFormDialog
         businessId={currentBusiness.id}

@@ -100,6 +100,7 @@ export default function InvoiceDetailPage() {
         vatAmount: Number(invoice.vat_amount),
         total: Number(invoice.total),
         vatRate: Number(invoice.vat_rate),
+        description: invoice.description,
         notes: invoice.notes,
         terms: invoice.terms,
       });
@@ -128,6 +129,7 @@ export default function InvoiceDetailPage() {
         vatAmount: Number(invoice.vat_amount),
         total: Number(invoice.total),
         vatRate: Number(invoice.vat_rate),
+        description: invoice.description,
         notes: invoice.notes,
         terms: invoice.terms,
       });
@@ -172,8 +174,8 @@ export default function InvoiceDetailPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-4 p-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+    <div className="mx-auto max-w-6xl p-4 lg:p-6">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2 lg:hidden">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-lg font-bold">{invoice.invoice_number}</h1>
@@ -209,31 +211,87 @@ export default function InvoiceDetailPage() {
         </div>
       </div>
 
-      <InvoicePreview
-        business={business}
-        client={client}
-        invoiceNumber={invoice.invoice_number}
-        type={invoice.type}
-        issueDate={invoice.issue_date}
-        dueDate={invoice.due_date}
-        items={items.map((i) => ({ localId: i.id, product_id: i.product_id, description: i.description, quantity: Number(i.quantity), unit_price: Number(i.unit_price) }))}
-        subtotal={Number(invoice.subtotal)}
-        vatAmount={Number(invoice.vat_amount)}
-        vatRate={Number(invoice.vat_rate)}
-        total={Number(invoice.total)}
-        notes={invoice.notes ?? ''}
-        terms={invoice.terms ?? ''}
-      />
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
+        <div className="space-y-4">
+          <InvoicePreview
+            business={business}
+            client={client}
+            invoiceNumber={invoice.invoice_number}
+            type={invoice.type}
+            issueDate={invoice.issue_date}
+            dueDate={invoice.due_date}
+            items={items.map((i) => ({ localId: i.id, product_id: i.product_id, description: i.description, quantity: Number(i.quantity), unit_price: Number(i.unit_price) }))}
+            subtotal={Number(invoice.subtotal)}
+            vatAmount={Number(invoice.vat_amount)}
+            vatRate={Number(invoice.vat_rate)}
+            total={Number(invoice.total)}
+            description={invoice.description ?? ''}
+            notes={invoice.notes ?? ''}
+            terms={invoice.terms ?? ''}
+          />
 
-      <div className="flex gap-2">
-        <Button variant="outline" className="flex-1 gap-2" onClick={handleDownload} disabled={!!busy}>
-          {busy === 'download' ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
-          Download PDF
-        </Button>
-        <Button className="flex-1 gap-2" onClick={handleWhatsApp} disabled={!!busy}>
-          {busy === 'whatsapp' ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageCircle className="h-4 w-4" />}
-          Share WhatsApp
-        </Button>
+          <div className="flex gap-2 lg:hidden">
+            <Button variant="outline" className="flex-1 gap-2" onClick={handleDownload} disabled={!!busy}>
+              {busy === 'download' ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
+              Download PDF
+            </Button>
+            <Button className="flex-1 gap-2" onClick={handleWhatsApp} disabled={!!busy}>
+              {busy === 'whatsapp' ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageCircle className="h-4 w-4" />}
+              Share WhatsApp
+            </Button>
+          </div>
+        </div>
+
+        <div className="hidden space-y-4 lg:block">
+          <div className="sticky top-20 space-y-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-lg font-bold">{invoice.invoice_number}</h1>
+                <Badge variant={statusBadgeVariant(invoice.status)}>{invoice.status}</Badge>
+              </div>
+              <p className="text-sm text-muted-foreground">{invoice.type === 'quote' ? 'Quote' : 'Invoice'}</p>
+            </div>
+
+            <div className="space-y-2 rounded-lg border bg-background p-3">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="w-full justify-between gap-1" disabled={busy === 'status'}>
+                    {busy === 'status' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Change status'}
+                    <ChevronDown className="h-3.5 w-3.5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-(--radix-dropdown-menu-trigger-width)">
+                  {statusOptions.map((status) => (
+                    <DropdownMenuItem key={status} onClick={() => handleStatusChange(status)}>
+                      Mark as {status}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Button asChild variant="outline" className="w-full gap-2">
+                <Link href={`/invoices/${invoice.id}/edit`}>
+                  <Pencil className="h-3.5 w-3.5" />
+                  Edit
+                </Link>
+              </Button>
+              <Button variant="outline" className="w-full gap-2 text-destructive hover:text-destructive" onClick={() => setConfirmDelete(true)}>
+                <Trash2 className="h-3.5 w-3.5" />
+                Delete
+              </Button>
+            </div>
+
+            <div className="space-y-2">
+              <Button variant="outline" className="w-full gap-2" onClick={handleDownload} disabled={!!busy}>
+                {busy === 'download' ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
+                Download PDF
+              </Button>
+              <Button className="w-full gap-2" onClick={handleWhatsApp} disabled={!!busy}>
+                {busy === 'whatsapp' ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageCircle className="h-4 w-4" />}
+                Share WhatsApp
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>

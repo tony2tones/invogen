@@ -150,6 +150,7 @@ create table if not exists invoices (
   vat_amount numeric not null default 0,
   total numeric not null default 0,
   vat_rate numeric not null default 0,
+  description text,
   notes text,
   terms text,
   due_date date,

@@ -61,7 +61,7 @@ export default function InvoicesPage() {
   if (!currentBusiness) return null;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-4 p-4">
+    <div className="mx-auto max-w-6xl space-y-4 p-4 lg:p-6">
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

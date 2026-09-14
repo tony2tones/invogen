@@ -32,6 +32,7 @@ export interface InvoiceBuilderInitial {
   client: Client | null;
   items: BuilderLineItem[];
   vatRate: number;
+  description: string;
   notes: string;
   terms: string;
   dueDate: string | null;
@@ -68,6 +69,7 @@ export function InvoiceBuilder({ business, initial, defaultType, defaultClientId
   const [selectedClient, setSelectedClient] = useState<Client | null>(initial?.client ?? null);
   const [items, setItems] = useState<BuilderLineItem[]>(initial?.items ?? []);
   const [vatRate, setVatRate] = useState(initial?.vatRate ?? 15);
+  const [description, setDescription] = useState(initial?.description ?? '');
   const [notes, setNotes] = useState(initial?.notes ?? '');
   const [terms, setTerms] = useState(initial?.terms ?? 'Payment due within 7 days of invoice date.');
   const [dueDate, setDueDate] = useState(initial?.dueDate ?? plusDaysIso(7));
@@ -138,11 +140,18 @@ export function InvoiceBuilder({ business, initial, defaultType, defaultClientId
   );
 
   const addCustomItem = () => setItems((prev) => [...prev, newLineItem()]);
-  const addProductItem = (product: Product) =>
+  const addProductItem = (product: Product) => {
     setItems((prev) => [
       ...prev,
       newLineItem({ product_id: product.id, description: product.name, unit_price: product.unit_price }),
     ]);
+    // Auto-fill the invoice description from the first product added, so the
+    // "what is this for" summary above the table doesn't need retyping — but
+    // never clobber something the user already wrote.
+    if (product.description && !description.trim()) {
+      setDescription(product.description);
+    }
+  };
   const updateItem = (localId: string, next: BuilderLineItem) => setItems((prev) => prev.map((i) => (i.localId === localId ? next : i)));
   const removeItem = (localId: string) => setItems((prev) => prev.filter((i) => i.localId !== localId));
 
@@ -176,6 +185,7 @@ export function InvoiceBuilder({ business, initial, defaultType, defaultClientId
           vat_amount: vatAmount,
           total,
           vat_rate: vatRate,
+          description: description || null,
           notes: notes || null,
           terms: terms || null,
           due_date: dueDate || null,
@@ -210,6 +220,7 @@ export function InvoiceBuilder({ business, initial, defaultType, defaultClientId
             vat_amount: vatAmount,
             total,
             vat_rate: vatRate,
+            description: description || null,
             notes: notes || null,
             terms: terms || null,
             due_date: dueDate || null,
@@ -235,6 +246,7 @@ export function InvoiceBuilder({ business, initial, defaultType, defaultClientId
             vat_amount: vatAmount,
             total,
             vat_rate: vatRate,
+            description: description || null,
             notes: notes || null,
             terms: terms || null,
             due_date: dueDate || null,
@@ -265,6 +277,7 @@ export function InvoiceBuilder({ business, initial, defaultType, defaultClientId
           vatAmount,
           total,
           vatRate,
+          description: description || null,
           notes: notes || null,
           terms: terms || null,
         });
@@ -303,13 +316,14 @@ export function InvoiceBuilder({ business, initial, defaultType, defaultClientId
       vatAmount={vatAmount}
       vatRate={vatRate}
       total={total}
+      description={description}
       notes={notes}
       terms={terms}
     />
   );
 
   return (
-    <div className="mx-auto grid max-w-6xl gap-6 p-4 lg:grid-cols-[1fr_380px]">
+    <div className="mx-auto grid max-w-7xl gap-6 p-4 lg:grid-cols-[1fr_420px] lg:p-6">
       <div className="space-y-5">
         <Tabs value={type} onValueChange={(v) => setType(v as InvoiceType)}>
           <TabsList>
@@ -343,6 +357,17 @@ export function InvoiceBuilder({ business, initial, defaultType, defaultClientId
               Select client
             </button>
           )}
+        </section>
+
+        <section className="space-y-1.5">
+          <Label htmlFor="description">Description</Label>
+          <Textarea
+            id="description"
+            rows={2}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="What is this invoice for? Auto-fills from the first catalog item you add."
+          />
         </section>
 
         <section className="space-y-2">

@@ -126,7 +126,7 @@ function ExpensesPageInner() {
   if (!currentBusiness) return null;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-4 p-4">
+    <div className="mx-auto max-w-6xl space-y-4 p-4 lg:p-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <Tabs value={period} onValueChange={(v) => setPeriod(v as Period)}>
           <TabsList className="flex-wrap">
@@ -156,29 +156,31 @@ function ExpensesPageInner() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <Card>
-          <CardHeader className="pb-1">
-            <CardTitle className="text-xs font-medium text-muted-foreground">Total expenses</CardTitle>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-1">
+          <Card>
+            <CardHeader className="pb-1">
+              <CardTitle className="text-xs font-medium text-muted-foreground">Total expenses</CardTitle>
+            </CardHeader>
+            <CardContent className="text-xl font-bold">{formatCurrency(total, currentBusiness.currency)}</CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-1">
+              <CardTitle className="text-xs font-medium text-muted-foreground">VAT included</CardTitle>
+            </CardHeader>
+            <CardContent className="text-xl font-bold">{formatCurrency(vatTotal, currentBusiness.currency)}</CardContent>
+          </Card>
+        </div>
+
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="text-base">By category</CardTitle>
           </CardHeader>
-          <CardContent className="text-xl font-bold">{formatCurrency(total, currentBusiness.currency)}</CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-1">
-            <CardTitle className="text-xs font-medium text-muted-foreground">VAT included</CardTitle>
-          </CardHeader>
-          <CardContent className="text-xl font-bold">{formatCurrency(vatTotal, currentBusiness.currency)}</CardContent>
+          <CardContent>
+            <CategoryBreakdown expenses={filtered} currency={currentBusiness.currency} />
+          </CardContent>
         </Card>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">By category</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <CategoryBreakdown expenses={filtered} currency={currentBusiness.currency} />
-        </CardContent>
-      </Card>
 
       <div className="flex items-center justify-between">
         <p className="text-sm font-medium text-muted-foreground">{filtered.length} expense{filtered.length === 1 ? '' : 's'}</p>

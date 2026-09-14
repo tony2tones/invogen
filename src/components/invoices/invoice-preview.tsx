@@ -1,6 +1,6 @@
 'use client';
 
-import { formatCurrency, formatDate } from '@/lib/format';
+import { formatCurrency, formatDateLong } from '@/lib/format';
 import { hasBankingDetails } from '@/lib/banking';
 import type { BusinessProfile, Client, InvoiceType } from '@/types/database';
 import type { BuilderLineItem } from './invoice-item-row';
@@ -17,47 +17,71 @@ interface InvoicePreviewProps {
   vatAmount: number;
   vatRate: number;
   total: number;
+  description: string;
   notes: string;
   terms: string;
 }
 
-export function InvoicePreview({ business, client, invoiceNumber, type, issueDate, dueDate, items, subtotal, vatAmount, vatRate, total, notes, terms }: InvoicePreviewProps) {
+function MetaLine({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border bg-white p-6 text-sm text-gray-900 shadow-sm">
-      <div className="mb-6 flex items-start justify-between">
-        <div>
-          {business.logo_url && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={business.logo_url} alt={business.name} className="mb-2 max-h-14 max-w-32 object-contain" />
-          )}
-          <p className="font-bold">{business.name}</p>
-          {business.address && <p className="text-xs text-gray-500">{business.address}</p>}
-          {business.phone && <p className="text-xs text-gray-500">{business.phone}</p>}
-          {business.email && <p className="text-xs text-gray-500">{business.email}</p>}
+    <div className="flex gap-2">
+      <span className="w-28 shrink-0 font-bold">{label}</span>
+      <span>{value}</span>
+    </div>
+  );
+}
+
+export function InvoicePreview({ business, client, invoiceNumber, type, issueDate, dueDate, items, subtotal, vatAmount, vatRate, total, description, notes, terms }: InvoicePreviewProps) {
+  const descriptionLines = description
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const showBreakdown = vatAmount > 0;
+
+  return (
+    <div className="mx-auto max-w-[794px] rounded-sm border bg-white p-10 font-serif text-[13px] leading-relaxed text-gray-900 shadow-md sm:p-12">
+      <div className="mb-5 flex items-start justify-between gap-4">
+        <div className="space-y-1">
+          <p className="mb-2 text-xl font-bold text-blue-700">{type === 'quote' ? 'Quotation' : 'Tax Invoice'}</p>
+          <MetaLine label="Business:" value={business.name} />
+          {business.email && <MetaLine label="Email:" value={business.email} />}
+          {business.phone && <MetaLine label="Phone:" value={business.phone} />}
+          {business.vat_number && <MetaLine label="VAT No:" value={business.vat_number} />}
+          <MetaLine label={type === 'quote' ? 'Quote No:' : 'Invoice No:'} value={invoiceNumber || 'DRAFT'} />
+          <MetaLine label="Date:" value={formatDateLong(issueDate)} />
+          {dueDate && <MetaLine label="Due date:" value={formatDateLong(dueDate)} />}
         </div>
-        <div className="text-right">
-          <p className="text-lg font-bold uppercase">{type === 'quote' ? 'Quotation' : 'Tax Invoice'}</p>
-          <p className="text-xs text-gray-500">{invoiceNumber || 'DRAFT'}</p>
-          <p className="text-xs text-gray-500">Issued {formatDate(issueDate)}</p>
-          {dueDate && <p className="text-xs text-gray-500">Due {formatDate(dueDate)}</p>}
-        </div>
+        {business.logo_url && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={business.logo_url} alt={business.name} className="h-16 w-16 shrink-0 object-contain" />
+        )}
       </div>
 
-      <div className="mb-6">
-        <p className="mb-1 text-[10px] uppercase tracking-wide text-gray-400">{type === 'quote' ? 'Quoted to' : 'Billed to'}</p>
-        <p className="font-semibold">{client?.name ?? 'No client selected'}</p>
-        {client?.address && <p className="text-xs text-gray-500">{client.address}</p>}
-        {client?.email && <p className="text-xs text-gray-500">{client.email}</p>}
-        {client?.phone && <p className="text-xs text-gray-500">{client.phone}</p>}
-      </div>
+      <p className="mb-1 mt-4 text-[15px] font-bold text-blue-700">Client</p>
+      <p className="font-bold">{client?.name ?? 'No client selected'}</p>
+      {client?.address && <p className="text-gray-600">{client.address}</p>}
+      {client?.email && <p className="text-gray-600">{client.email}</p>}
+      {client?.phone && <p className="text-gray-600">{client.phone}</p>}
+      {client?.vat_number && <p className="text-gray-600">VAT: {client.vat_number}</p>}
 
-      <table className="w-full text-xs">
+      {descriptionLines.length > 0 && (
+        <>
+          <p className="mb-1 mt-4 text-[15px] font-bold text-blue-700">Description:</p>
+          <div className="space-y-1">
+            {descriptionLines.map((line, i) => (
+              <p key={i}>{line.startsWith('-') ? line : `- ${line}`}</p>
+            ))}
+          </div>
+        </>
+      )}
+
+      <table className="mt-5 w-full text-sm">
         <thead>
-          <tr className="border-b-2 border-gray-900 text-left text-[10px] uppercase text-gray-400">
-            <th className="pb-2 font-medium">Description</th>
-            <th className="pb-2 text-right font-medium">Qty</th>
-            <th className="pb-2 text-right font-medium">Price</th>
-            <th className="pb-2 text-right font-medium">Total</th>
+          <tr className="border-b border-gray-900 text-left">
+            <th className="pb-1.5 font-bold">Item</th>
+            <th className="pb-1.5 text-right font-bold">Qty</th>
+            <th className="pb-1.5 text-right font-bold">Price</th>
+            <th className="pb-1.5 text-right font-bold">Amount</th>
           </tr>
         </thead>
         <tbody>
@@ -69,42 +93,46 @@ export function InvoicePreview({ business, client, invoiceNumber, type, issueDat
             </tr>
           )}
           {items.map((item) => (
-            <tr key={item.localId} className="border-b border-gray-100">
-              <td className="py-2 pr-2">{item.description || '—'}</td>
-              <td className="py-2 text-right">{item.quantity}</td>
-              <td className="py-2 text-right">{formatCurrency(item.unit_price, business.currency)}</td>
-              <td className="py-2 text-right font-medium">{formatCurrency(item.quantity * item.unit_price, business.currency)}</td>
+            <tr key={item.localId} className="border-b border-gray-200">
+              <td className="py-1.5 pr-2">{item.description || '—'}</td>
+              <td className="py-1.5 text-right">{item.quantity}</td>
+              <td className="py-1.5 text-right">{formatCurrency(item.unit_price, business.currency)}</td>
+              <td className="py-1.5 text-right">{formatCurrency(item.quantity * item.unit_price, business.currency)}</td>
             </tr>
           ))}
         </tbody>
       </table>
 
-      <div className="ml-auto mt-4 w-48 space-y-1 text-xs">
-        <div className="flex justify-between text-gray-500">
-          <span>Subtotal</span>
-          <span>{formatCurrency(subtotal, business.currency)}</span>
-        </div>
-        <div className="flex justify-between text-gray-500">
-          <span>VAT ({vatRate}%)</span>
-          <span>{formatCurrency(vatAmount, business.currency)}</span>
-        </div>
-        <div className="flex justify-between border-t border-gray-900 pt-1.5 text-sm font-bold">
-          <span>Total</span>
+      <div className="ml-auto mt-3 w-52 space-y-1">
+        {showBreakdown && (
+          <>
+            <div className="flex justify-between text-gray-600">
+              <span>Subtotal</span>
+              <span>{formatCurrency(subtotal, business.currency)}</span>
+            </div>
+            <div className="flex justify-between text-gray-600">
+              <span>VAT ({vatRate}%)</span>
+              <span>{formatCurrency(vatAmount, business.currency)}</span>
+            </div>
+          </>
+        )}
+        <div className="flex justify-between border-t border-gray-900 pt-1.5 font-bold">
+          <span>{type === 'quote' ? 'Total' : 'Amount Due'}</span>
           <span>{formatCurrency(total, business.currency)}</span>
         </div>
       </div>
 
       {(notes || terms) && (
-        <div className="mt-6 space-y-2 text-xs text-gray-600">
+        <div className="mt-5 space-y-3">
           {notes && (
             <div>
-              <p className="mb-0.5 text-[10px] uppercase tracking-wide text-gray-400">Notes</p>
+              <p className="mb-0.5 text-[15px] font-bold text-blue-700">Notes</p>
               <p className="whitespace-pre-wrap">{notes}</p>
             </div>
           )}
           {terms && (
             <div>
-              <p className="mb-0.5 text-[10px] uppercase tracking-wide text-gray-400">Terms</p>
+              <p className="mb-0.5 text-[15px] font-bold text-blue-700">Terms</p>
               <p className="whitespace-pre-wrap">{terms}</p>
             </div>
           )}
@@ -112,53 +140,56 @@ export function InvoicePreview({ business, client, invoiceNumber, type, issueDat
       )}
 
       {hasBankingDetails(business) && (
-        <div className="mt-6 rounded border border-gray-200 p-3 text-xs text-gray-600">
-          <p className="mb-1.5 text-[10px] uppercase tracking-wide text-gray-400">Banking details</p>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
+        <div className="mt-5">
+          <p className="mb-1 text-[15px] font-bold text-blue-700">Bank Details:</p>
+          <div>
             {business.bank_name && (
-              <div className="flex justify-between gap-2">
-                <span className="text-gray-400">Bank</span>
-                <span className="font-medium">{business.bank_name}</span>
+              <div className="flex border-b border-gray-200 py-1">
+                <span className="w-32 shrink-0 text-gray-500">Bank</span>
+                <span>{business.bank_name}</span>
               </div>
             )}
             {business.account_holder && (
-              <div className="flex justify-between gap-2">
-                <span className="text-gray-400">Account holder</span>
-                <span className="font-medium">{business.account_holder}</span>
+              <div className="flex border-b border-gray-200 py-1">
+                <span className="w-32 shrink-0 text-gray-500">Account holder</span>
+                <span>{business.account_holder}</span>
               </div>
             )}
             {business.account_number && (
-              <div className="flex justify-between gap-2">
-                <span className="text-gray-400">Acc no.</span>
-                <span className="font-medium">{business.account_number}</span>
+              <div className="flex border-b border-gray-200 py-1">
+                <span className="w-32 shrink-0 text-gray-500">Account number</span>
+                <span>{business.account_number}</span>
               </div>
             )}
             {business.branch_code && (
-              <div className="flex justify-between gap-2">
-                <span className="text-gray-400">Branch code</span>
-                <span className="font-medium">{business.branch_code}</span>
+              <div className="flex border-b border-gray-200 py-1">
+                <span className="w-32 shrink-0 text-gray-500">Branch code</span>
+                <span>{business.branch_code}</span>
               </div>
             )}
             {business.account_type && (
-              <div className="flex justify-between gap-2">
-                <span className="text-gray-400">Account type</span>
-                <span className="font-medium">{business.account_type}</span>
+              <div className="flex border-b border-gray-200 py-1">
+                <span className="w-32 shrink-0 text-gray-500">Account type</span>
+                <span>{business.account_type}</span>
               </div>
             )}
             {business.swift_code && (
-              <div className="flex justify-between gap-2">
-                <span className="text-gray-400">SWIFT/BIC</span>
-                <span className="font-medium">{business.swift_code}</span>
+              <div className="flex border-b border-gray-200 py-1">
+                <span className="w-32 shrink-0 text-gray-500">SWIFT/BIC</span>
+                <span>{business.swift_code}</span>
               </div>
             )}
+            <div className="flex border-b border-gray-200 py-1">
+              <span className="w-32 shrink-0 text-gray-500">Reference</span>
+              <span>Please use {invoiceNumber || 'this invoice number'} as your payment reference</span>
+            </div>
           </div>
-          <p className="mt-1.5 border-t border-gray-100 pt-1.5">
-            Please use <span className="font-semibold">{invoiceNumber || 'this invoice number'}</span> as your payment reference.
-          </p>
         </div>
       )}
 
-      <p className="mt-8 text-center text-[9px] text-gray-300">Powered by Two Tones Digital</p>
+      <p className="mt-6">Thank you for your support and business.</p>
+
+      <p className="mt-10 text-center text-[10px] text-gray-300">Powered by Two Tones Digital</p>
     </div>
   );
 }

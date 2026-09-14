@@ -83,8 +83,8 @@ export default function DashboardPage() {
   if (!currentBusiness) return null;
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 p-4">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <div className="mx-auto max-w-7xl space-y-6 p-4 lg:p-6">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Card>
           <CardHeader className="pb-1">
             <CardTitle className="text-xs font-medium text-muted-foreground">Outstanding</CardTitle>
@@ -113,7 +113,7 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         <Button asChild variant="outline" className="h-16 flex-col gap-1">
           <Link href="/invoices/new">
             <FilePlus2 className="h-4 w-4" />
@@ -153,27 +153,31 @@ export default function DashboardPage() {
             <Link href="/invoices">View all</Link>
           </Button>
         </CardHeader>
-        <CardContent className="space-y-1">
+        <CardContent>
           {loading && <p className="text-sm text-muted-foreground">Loading…</p>}
           {!loading && recent.length === 0 && <p className="text-sm text-muted-foreground">No invoices yet.</p>}
-          {recent.map((invoice) => (
-            <Link
-              key={invoice.id}
-              href={`/invoices/${invoice.id}`}
-              className="flex items-center justify-between rounded-md px-2 py-2 hover:bg-muted/60"
-            >
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium">{invoice.client_name ?? 'No client'}</p>
-                <p className="text-xs text-muted-foreground">
-                  {invoice.invoice_number} · {formatDate(invoice.issue_date)}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-semibold">{formatCurrency(Number(invoice.total), currentBusiness.currency)}</span>
-                <Badge variant={statusBadgeVariant(invoice.status)}>{invoice.status}</Badge>
-              </div>
-            </Link>
-          ))}
+          {!loading && recent.length > 0 && (
+            <div className="grid grid-cols-1 gap-1 lg:grid-cols-2">
+              {recent.map((invoice) => (
+                <Link
+                  key={invoice.id}
+                  href={`/invoices/${invoice.id}`}
+                  className="flex items-center justify-between rounded-md px-2 py-2 hover:bg-muted/60"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{invoice.client_name ?? 'No client'}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {invoice.invoice_number} · {formatDate(invoice.issue_date)}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold">{formatCurrency(Number(invoice.total), currentBusiness.currency)}</span>
+                    <Badge variant={statusBadgeVariant(invoice.status)}>{invoice.status}</Badge>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

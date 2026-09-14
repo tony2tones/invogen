@@ -1,39 +1,43 @@
 import { Document, Page, View, Text, Image, StyleSheet, Font } from '@react-pdf/renderer';
 import { hasBankingDetails } from '@/lib/banking';
+import { formatDateLong } from '@/lib/format';
 import type { BusinessProfile, Client, InvoiceItem, InvoiceType } from '@/types/database';
 
 Font.registerHyphenationCallback((word) => [word]);
 
+const ACCENT = '#1a56db';
+const MUTED = '#6b7280';
+const BORDER = '#d1d5db';
+
 const styles = StyleSheet.create({
-  page: { padding: 36, fontSize: 10, fontFamily: 'Helvetica', color: '#111827' },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 24 },
-  logo: { width: 80, height: 80, objectFit: 'contain', marginBottom: 6 },
-  businessName: { fontSize: 14, fontWeight: 700 },
-  muted: { color: '#6b7280' },
-  docTitle: { fontSize: 20, fontWeight: 700, textAlign: 'right' },
-  docMeta: { textAlign: 'right', marginTop: 4 },
-  section: { marginBottom: 20 },
-  sectionLabel: { fontSize: 8, textTransform: 'uppercase', color: '#6b7280', marginBottom: 4, letterSpacing: 0.5 },
-  twoCol: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
-  table: { borderTopWidth: 1, borderTopColor: '#e5e7eb' },
-  tableHeaderRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#111827', paddingVertical: 6 },
-  tableRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#e5e7eb', paddingVertical: 6 },
+  page: { padding: 40, fontSize: 10.5, fontFamily: 'Times-Roman', color: '#111827', lineHeight: 1.4 },
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 18 },
+  docTitle: { fontSize: 20, fontWeight: 700, color: ACCENT, marginBottom: 8 },
+  metaLine: { flexDirection: 'row', marginBottom: 2 },
+  metaLabel: { fontWeight: 700, width: 100 },
+  logo: { width: 64, height: 64, objectFit: 'contain' },
+  sectionHeading: { fontSize: 11, fontWeight: 700, color: ACCENT, marginBottom: 4, marginTop: 16 },
+  muted: { color: MUTED },
+  bulletLine: { marginBottom: 3 },
+  table: { marginTop: 8, borderTopWidth: 1, borderTopColor: '#111827' },
+  tableHeaderRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#111827', paddingVertical: 5 },
+  tableRow: { flexDirection: 'row', borderBottomWidth: 0.5, borderBottomColor: BORDER, paddingVertical: 5 },
   colDescription: { flex: 4 },
   colQty: { flex: 1, textAlign: 'right' },
-  colPrice: { flex: 1.4, textAlign: 'right' },
-  colTotal: { flex: 1.4, textAlign: 'right' },
-  tableHeaderText: { fontSize: 8, textTransform: 'uppercase', color: '#6b7280', fontWeight: 700 },
-  totals: { marginTop: 14, alignSelf: 'flex-end', width: 220 },
-  totalRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 3 },
-  grandTotalRow: { flexDirection: 'row', justifyContent: 'space-between', paddingTop: 8, marginTop: 4, borderTopWidth: 1, borderTopColor: '#111827' },
-  grandTotalLabel: { fontWeight: 700, fontSize: 12 },
-  grandTotalValue: { fontWeight: 700, fontSize: 12 },
-  notesBlock: { marginTop: 24 },
-  bankingBlock: { marginTop: 16, padding: 10, borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 4 },
-  bankingRow: { flexDirection: 'row', width: '50%', justifyContent: 'space-between', marginBottom: 2 },
-  bankingGrid: { flexDirection: 'row', flexWrap: 'wrap' },
-  bankingReference: { marginTop: 6, paddingTop: 6, borderTopWidth: 1, borderTopColor: '#f3f4f6' },
-  footer: { position: 'absolute', bottom: 24, left: 36, right: 36, textAlign: 'center', fontSize: 8, color: '#9ca3af' },
+  colPrice: { flex: 1.3, textAlign: 'right' },
+  colTotal: { flex: 1.3, textAlign: 'right' },
+  tableHeaderText: { fontWeight: 700 },
+  totals: { marginTop: 10, alignSelf: 'flex-end', width: 220 },
+  totalRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 2 },
+  grandTotalRow: { flexDirection: 'row', justifyContent: 'space-between', paddingTop: 6, marginTop: 4, borderTopWidth: 1, borderTopColor: '#111827' },
+  grandTotalLabel: { fontWeight: 700 },
+  grandTotalValue: { fontWeight: 700 },
+  notesBlock: { marginTop: 4 },
+  bankRow: { flexDirection: 'row', borderBottomWidth: 0.5, borderBottomColor: BORDER, paddingVertical: 4 },
+  bankLabel: { width: 130, color: MUTED },
+  bankValue: { flex: 1 },
+  thanks: { marginTop: 18 },
+  footer: { position: 'absolute', bottom: 24, left: 40, right: 40, textAlign: 'center', fontSize: 8, color: MUTED },
 });
 
 function formatMoney(amount: number, currency: string) {
@@ -54,6 +58,7 @@ interface InvoiceDocumentProps {
   vatAmount: number;
   total: number;
   vatRate: number;
+  description: string | null;
   notes: string | null;
   terms: string | null;
 }
@@ -70,52 +75,92 @@ export function InvoiceDocument({
   vatAmount,
   total,
   vatRate,
+  description,
   notes,
   terms,
 }: InvoiceDocumentProps) {
   const title = type === 'quote' ? 'Quotation' : 'Tax Invoice';
   const currency = business.currency || 'ZAR';
+  const descriptionLines = (description ?? '')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+  // A quote with no VAT (the common freelance case) doesn't need the extra
+  // subtotal/VAT rows — a single bold total reads cleaner, matching how most
+  // hand-written quotes look.
+  const showBreakdown = vatAmount > 0;
 
   return (
     <Document title={`${title} ${invoiceNumber}`}>
       <Page size="A4" style={styles.page}>
         <View style={styles.headerRow}>
-          <View>
-            {/* eslint-disable-next-line jsx-a11y/alt-text -- @react-pdf/renderer's Image has no alt prop */}
-            {business.logo_url && <Image src={business.logo_url} style={styles.logo} />}
-            <Text style={styles.businessName}>{business.name}</Text>
-            {business.address && <Text style={styles.muted}>{business.address}</Text>}
-            {business.phone && <Text style={styles.muted}>{business.phone}</Text>}
-            {business.email && <Text style={styles.muted}>{business.email}</Text>}
-            {business.vat_number && <Text style={styles.muted}>VAT: {business.vat_number}</Text>}
-          </View>
-          <View>
+          <View style={{ flex: 1 }}>
             <Text style={styles.docTitle}>{title}</Text>
-            <View style={styles.docMeta}>
-              <Text>{invoiceNumber}</Text>
-              <Text style={styles.muted}>Issued: {issueDate}</Text>
-              {dueDate && <Text style={styles.muted}>Due: {dueDate}</Text>}
+            <View style={styles.metaLine}>
+              <Text style={styles.metaLabel}>Business:</Text>
+              <Text>{business.name}</Text>
             </View>
+            {business.email && (
+              <View style={styles.metaLine}>
+                <Text style={styles.metaLabel}>Email:</Text>
+                <Text>{business.email}</Text>
+              </View>
+            )}
+            {business.phone && (
+              <View style={styles.metaLine}>
+                <Text style={styles.metaLabel}>Phone:</Text>
+                <Text>{business.phone}</Text>
+              </View>
+            )}
+            {business.vat_number && (
+              <View style={styles.metaLine}>
+                <Text style={styles.metaLabel}>VAT No:</Text>
+                <Text>{business.vat_number}</Text>
+              </View>
+            )}
+            <View style={styles.metaLine}>
+              <Text style={styles.metaLabel}>{type === 'quote' ? 'Quote No:' : 'Invoice No:'}</Text>
+              <Text>{invoiceNumber}</Text>
+            </View>
+            <View style={styles.metaLine}>
+              <Text style={styles.metaLabel}>Date:</Text>
+              <Text>{formatDateLong(issueDate)}</Text>
+            </View>
+            {dueDate && (
+              <View style={styles.metaLine}>
+                <Text style={styles.metaLabel}>Due date:</Text>
+                <Text>{formatDateLong(dueDate)}</Text>
+              </View>
+            )}
           </View>
+          {/* eslint-disable-next-line jsx-a11y/alt-text -- @react-pdf/renderer's Image has no alt prop */}
+          {business.logo_url && <Image src={business.logo_url} style={styles.logo} />}
         </View>
 
-        <View style={styles.twoCol}>
-          <View style={{ maxWidth: 260 }}>
-            <Text style={styles.sectionLabel}>{type === 'quote' ? 'Quoted to' : 'Billed to'}</Text>
-            <Text style={{ fontWeight: 700 }}>{client?.name ?? 'Walk-in client'}</Text>
-            {client?.address && <Text style={styles.muted}>{client.address}</Text>}
-            {client?.email && <Text style={styles.muted}>{client.email}</Text>}
-            {client?.phone && <Text style={styles.muted}>{client.phone}</Text>}
-            {client?.vat_number && <Text style={styles.muted}>VAT: {client.vat_number}</Text>}
+        <Text style={styles.sectionHeading}>Client</Text>
+        <Text style={{ fontWeight: 700 }}>{client?.name ?? 'Walk-in client'}</Text>
+        {client?.address && <Text style={styles.muted}>{client.address}</Text>}
+        {client?.email && <Text style={styles.muted}>{client.email}</Text>}
+        {client?.phone && <Text style={styles.muted}>{client.phone}</Text>}
+        {client?.vat_number && <Text style={styles.muted}>VAT: {client.vat_number}</Text>}
+
+        {descriptionLines.length > 0 && (
+          <View wrap={false}>
+            <Text style={styles.sectionHeading}>Description:</Text>
+            {descriptionLines.map((line, i) => (
+              <Text key={i} style={styles.bulletLine}>
+                {line.startsWith('-') ? line : `- ${line}`}
+              </Text>
+            ))}
           </View>
-        </View>
+        )}
 
         <View style={styles.table}>
           <View style={styles.tableHeaderRow}>
-            <Text style={[styles.colDescription, styles.tableHeaderText]}>Description</Text>
+            <Text style={[styles.colDescription, styles.tableHeaderText]}>Item</Text>
             <Text style={[styles.colQty, styles.tableHeaderText]}>Qty</Text>
             <Text style={[styles.colPrice, styles.tableHeaderText]}>Price</Text>
-            <Text style={[styles.colTotal, styles.tableHeaderText]}>Total</Text>
+            <Text style={[styles.colTotal, styles.tableHeaderText]}>Amount</Text>
           </View>
           {items.map((item, i) => (
             <View style={styles.tableRow} key={i} wrap={false}>
@@ -127,32 +172,36 @@ export function InvoiceDocument({
           ))}
         </View>
 
-        <View style={styles.totals}>
-          <View style={styles.totalRow}>
-            <Text style={styles.muted}>Subtotal</Text>
-            <Text>{formatMoney(subtotal, currency)}</Text>
-          </View>
-          <View style={styles.totalRow}>
-            <Text style={styles.muted}>VAT ({vatRate}%)</Text>
-            <Text>{formatMoney(vatAmount, currency)}</Text>
-          </View>
+        <View style={styles.totals} wrap={false}>
+          {showBreakdown && (
+            <>
+              <View style={styles.totalRow}>
+                <Text style={styles.muted}>Subtotal</Text>
+                <Text>{formatMoney(subtotal, currency)}</Text>
+              </View>
+              <View style={styles.totalRow}>
+                <Text style={styles.muted}>VAT ({vatRate}%)</Text>
+                <Text>{formatMoney(vatAmount, currency)}</Text>
+              </View>
+            </>
+          )}
           <View style={styles.grandTotalRow}>
-            <Text style={styles.grandTotalLabel}>Total</Text>
+            <Text style={styles.grandTotalLabel}>{type === 'quote' ? 'Total' : 'Amount Due'}</Text>
             <Text style={styles.grandTotalValue}>{formatMoney(total, currency)}</Text>
           </View>
         </View>
 
         {(notes || terms) && (
-          <View style={styles.notesBlock}>
+          <View style={styles.notesBlock} wrap={false}>
             {notes && (
-              <View style={{ marginBottom: 10 }}>
-                <Text style={styles.sectionLabel}>Notes</Text>
+              <View style={{ marginBottom: 8 }}>
+                <Text style={styles.sectionHeading}>Notes</Text>
                 <Text>{notes}</Text>
               </View>
             )}
             {terms && (
               <View>
-                <Text style={styles.sectionLabel}>Terms</Text>
+                <Text style={styles.sectionHeading}>Terms</Text>
                 <Text>{terms}</Text>
               </View>
             )}
@@ -160,49 +209,52 @@ export function InvoiceDocument({
         )}
 
         {hasBankingDetails(business) && (
-          <View style={styles.bankingBlock} wrap={false}>
-            <Text style={styles.sectionLabel}>Banking details</Text>
-            <View style={styles.bankingGrid}>
-              {business.bank_name && (
-                <View style={styles.bankingRow}>
-                  <Text style={styles.muted}>Bank</Text>
-                  <Text>{business.bank_name}</Text>
-                </View>
-              )}
-              {business.account_holder && (
-                <View style={styles.bankingRow}>
-                  <Text style={styles.muted}>Account holder</Text>
-                  <Text>{business.account_holder}</Text>
-                </View>
-              )}
-              {business.account_number && (
-                <View style={styles.bankingRow}>
-                  <Text style={styles.muted}>Acc no.</Text>
-                  <Text>{business.account_number}</Text>
-                </View>
-              )}
-              {business.branch_code && (
-                <View style={styles.bankingRow}>
-                  <Text style={styles.muted}>Branch code</Text>
-                  <Text>{business.branch_code}</Text>
-                </View>
-              )}
-              {business.account_type && (
-                <View style={styles.bankingRow}>
-                  <Text style={styles.muted}>Account type</Text>
-                  <Text>{business.account_type}</Text>
-                </View>
-              )}
-              {business.swift_code && (
-                <View style={styles.bankingRow}>
-                  <Text style={styles.muted}>SWIFT/BIC</Text>
-                  <Text>{business.swift_code}</Text>
-                </View>
-              )}
+          <View wrap={false}>
+            <Text style={styles.sectionHeading}>Bank Details:</Text>
+            {business.bank_name && (
+              <View style={styles.bankRow}>
+                <Text style={styles.bankLabel}>Bank</Text>
+                <Text style={styles.bankValue}>{business.bank_name}</Text>
+              </View>
+            )}
+            {business.account_holder && (
+              <View style={styles.bankRow}>
+                <Text style={styles.bankLabel}>Account holder</Text>
+                <Text style={styles.bankValue}>{business.account_holder}</Text>
+              </View>
+            )}
+            {business.account_number && (
+              <View style={styles.bankRow}>
+                <Text style={styles.bankLabel}>Account number</Text>
+                <Text style={styles.bankValue}>{business.account_number}</Text>
+              </View>
+            )}
+            {business.branch_code && (
+              <View style={styles.bankRow}>
+                <Text style={styles.bankLabel}>Branch code</Text>
+                <Text style={styles.bankValue}>{business.branch_code}</Text>
+              </View>
+            )}
+            {business.account_type && (
+              <View style={styles.bankRow}>
+                <Text style={styles.bankLabel}>Account type</Text>
+                <Text style={styles.bankValue}>{business.account_type}</Text>
+              </View>
+            )}
+            {business.swift_code && (
+              <View style={styles.bankRow}>
+                <Text style={styles.bankLabel}>SWIFT/BIC</Text>
+                <Text style={styles.bankValue}>{business.swift_code}</Text>
+              </View>
+            )}
+            <View style={styles.bankRow}>
+              <Text style={styles.bankLabel}>Reference</Text>
+              <Text style={styles.bankValue}>Please use {invoiceNumber} as your payment reference</Text>
             </View>
-            <Text style={styles.bankingReference}>Please use {invoiceNumber} as your payment reference.</Text>
           </View>
         )}
+
+        <Text style={styles.thanks}>Thank you for your support and business.</Text>
 
         <Text style={styles.footer} fixed>
           Powered by Two Tones Digital

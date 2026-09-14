@@ -51,6 +51,7 @@ export default function EditInvoicePage() {
           unit_price: Number(i.unit_price),
         })),
         vatRate: Number(invoice.vat_rate),
+        description: invoice.description ?? '',
         notes: invoice.notes ?? '',
         terms: invoice.terms ?? '',
         dueDate: invoice.due_date,

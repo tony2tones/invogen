@@ -15,6 +15,15 @@ export function formatDate(date: string | Date | null | undefined) {
   });
 }
 
+export function formatDateLong(date: string | Date | null | undefined) {
+  if (!date) return '—';
+  return new Date(date).toLocaleDateString('en-ZA', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+}
+
 export function initials(name: string) {
   return name
     .split(' ')
