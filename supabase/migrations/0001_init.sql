@@ -53,6 +53,7 @@ create table if not exists business_profiles (
   account_number text,
   branch_code text,
   account_type text,
+  swift_code text,
   created_at timestamptz not null default now()
 );
 

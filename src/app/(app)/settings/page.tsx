@@ -31,6 +31,7 @@ export default function SettingsPage() {
     account_number: '',
     branch_code: '',
     account_type: '',
+    swift_code: '',
   });
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -52,6 +53,7 @@ export default function SettingsPage() {
       account_number: currentBusiness.account_number ?? '',
       branch_code: currentBusiness.branch_code ?? '',
       account_type: currentBusiness.account_type ?? '',
+      swift_code: currentBusiness.swift_code ?? '',
     });
     setLogoUrl(currentBusiness.logo_url);
   }, [currentBusiness]);
@@ -78,6 +80,7 @@ export default function SettingsPage() {
         account_number: form.account_number.trim() || null,
         branch_code: form.branch_code.trim() || null,
         account_type: form.account_type.trim() || null,
+        swift_code: form.swift_code.trim() || null,
       })
       .eq('id', currentBusiness.id);
     setSaving(false);
@@ -221,6 +224,10 @@ export default function SettingsPage() {
                   <Label htmlFor="bank-type">Account type</Label>
                   <Input id="bank-type" value={form.account_type} onChange={(e) => setForm({ ...form, account_type: e.target.value })} placeholder="Cheque / Savings" />
                 </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="bank-swift">SWIFT / BIC code</Label>
+                <Input id="bank-swift" value={form.swift_code} onChange={(e) => setForm({ ...form, swift_code: e.target.value })} placeholder="For international clients" />
               </div>
             </div>
 

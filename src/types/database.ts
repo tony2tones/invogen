@@ -20,6 +20,7 @@ export interface BusinessProfile {
   account_number: string | null;
   branch_code: string | null;
   account_type: string | null;
+  swift_code: string | null;
   created_at: string;
 }
 

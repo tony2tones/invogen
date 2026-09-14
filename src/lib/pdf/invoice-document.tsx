@@ -1,4 +1,5 @@
 import { Document, Page, View, Text, Image, StyleSheet, Font } from '@react-pdf/renderer';
+import { hasBankingDetails } from '@/lib/banking';
 import type { BusinessProfile, Client, InvoiceItem, InvoiceType } from '@/types/database';
 
 Font.registerHyphenationCallback((word) => [word]);
@@ -158,7 +159,7 @@ export function InvoiceDocument({
           </View>
         )}
 
-        {(business.bank_name || business.account_number) && (
+        {hasBankingDetails(business) && (
           <View style={styles.bankingBlock} wrap={false}>
             <Text style={styles.sectionLabel}>Banking details</Text>
             <View style={styles.bankingGrid}>
@@ -190,6 +191,12 @@ export function InvoiceDocument({
                 <View style={styles.bankingRow}>
                   <Text style={styles.muted}>Account type</Text>
                   <Text>{business.account_type}</Text>
+                </View>
+              )}
+              {business.swift_code && (
+                <View style={styles.bankingRow}>
+                  <Text style={styles.muted}>SWIFT/BIC</Text>
+                  <Text>{business.swift_code}</Text>
                 </View>
               )}
             </View>

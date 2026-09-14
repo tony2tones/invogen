@@ -1,6 +1,7 @@
 'use client';
 
 import { formatCurrency, formatDate } from '@/lib/format';
+import { hasBankingDetails } from '@/lib/banking';
 import type { BusinessProfile, Client, InvoiceType } from '@/types/database';
 import type { BuilderLineItem } from './invoice-item-row';
 
@@ -110,7 +111,7 @@ export function InvoicePreview({ business, client, invoiceNumber, type, issueDat
         </div>
       )}
 
-      {(business.bank_name || business.account_number) && (
+      {hasBankingDetails(business) && (
         <div className="mt-6 rounded border border-gray-200 p-3 text-xs text-gray-600">
           <p className="mb-1.5 text-[10px] uppercase tracking-wide text-gray-400">Banking details</p>
           <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
@@ -142,6 +143,12 @@ export function InvoicePreview({ business, client, invoiceNumber, type, issueDat
               <div className="flex justify-between gap-2">
                 <span className="text-gray-400">Account type</span>
                 <span className="font-medium">{business.account_type}</span>
+              </div>
+            )}
+            {business.swift_code && (
+              <div className="flex justify-between gap-2">
+                <span className="text-gray-400">SWIFT/BIC</span>
+                <span className="font-medium">{business.swift_code}</span>
               </div>
             )}
           </div>
