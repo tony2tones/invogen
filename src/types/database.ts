@@ -63,6 +63,7 @@ export interface Invoice {
   total: number;
   vat_rate: number;
   description: string | null;
+  show_description: boolean;
   notes: string | null;
   terms: string | null;
   due_date: string | null;

@@ -60,6 +60,7 @@ interface InvoiceDocumentProps {
   total: number;
   vatRate: number;
   description: string | null;
+  showDescription: boolean;
   productDescriptions: Record<string, string>;
   notes: string | null;
   terms: string | null;
@@ -78,13 +79,14 @@ export function InvoiceDocument({
   total,
   vatRate,
   description,
+  showDescription,
   productDescriptions,
   notes,
   terms,
 }: InvoiceDocumentProps) {
   const title = type === 'quote' ? 'Quotation' : 'Tax Invoice';
   const currency = business.currency || 'ZAR';
-  const descriptionLines = buildDescriptionLines(description ?? '', items, productDescriptions);
+  const descriptionLines = showDescription ? buildDescriptionLines(description ?? '', items, productDescriptions) : [];
   // A quote with no VAT (the common freelance case) doesn't need the extra
   // subtotal/VAT rows — a single bold total reads cleaner, matching how most
   // hand-written quotes look.

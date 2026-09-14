@@ -52,6 +52,7 @@ export default function EditInvoicePage() {
         })),
         vatRate: Number(invoice.vat_rate),
         description: invoice.description ?? '',
+        showDescription: invoice.show_description,
         notes: invoice.notes ?? '',
         terms: invoice.terms ?? '',
         dueDate: invoice.due_date,

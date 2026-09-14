@@ -19,6 +19,7 @@ interface InvoicePreviewProps {
   vatRate: number;
   total: number;
   description: string;
+  showDescription: boolean;
   productDescriptions: Record<string, string>;
   notes: string;
   terms: string;
@@ -33,8 +34,8 @@ function MetaLine({ label, value }: { label: string; value: string }) {
   );
 }
 
-export function InvoicePreview({ business, client, invoiceNumber, type, issueDate, dueDate, items, subtotal, vatAmount, vatRate, total, description, productDescriptions, notes, terms }: InvoicePreviewProps) {
-  const descriptionLines = buildDescriptionLines(description, items, productDescriptions);
+export function InvoicePreview({ business, client, invoiceNumber, type, issueDate, dueDate, items, subtotal, vatAmount, vatRate, total, description, showDescription, productDescriptions, notes, terms }: InvoicePreviewProps) {
+  const descriptionLines = showDescription ? buildDescriptionLines(description, items, productDescriptions) : [];
   const showBreakdown = vatAmount > 0;
 
   return (

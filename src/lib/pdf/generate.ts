@@ -18,6 +18,7 @@ export interface InvoicePdfInput {
   total: number;
   vatRate: number;
   description: string | null;
+  showDescription: boolean;
   productDescriptions: Record<string, string>;
   notes: string | null;
   terms: string | null;

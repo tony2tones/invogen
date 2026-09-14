@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -33,6 +34,7 @@ export interface InvoiceBuilderInitial {
   items: BuilderLineItem[];
   vatRate: number;
   description: string;
+  showDescription: boolean;
   notes: string;
   terms: string;
   dueDate: string | null;
@@ -70,6 +72,7 @@ export function InvoiceBuilder({ business, initial, defaultType, defaultClientId
   const [items, setItems] = useState<BuilderLineItem[]>(initial?.items ?? []);
   const [vatRate, setVatRate] = useState(initial?.vatRate ?? 15);
   const [description, setDescription] = useState(initial?.description ?? '');
+  const [showDescription, setShowDescription] = useState(initial?.showDescription ?? true);
   const [notes, setNotes] = useState(initial?.notes ?? '');
   const [terms, setTerms] = useState(initial?.terms ?? 'Payment due within 7 days of invoice date.');
   const [dueDate, setDueDate] = useState(initial?.dueDate ?? plusDaysIso(7));
@@ -191,6 +194,7 @@ export function InvoiceBuilder({ business, initial, defaultType, defaultClientId
           total,
           vat_rate: vatRate,
           description: description || null,
+          show_description: showDescription,
           notes: notes || null,
           terms: terms || null,
           due_date: dueDate || null,
@@ -226,6 +230,7 @@ export function InvoiceBuilder({ business, initial, defaultType, defaultClientId
             total,
             vat_rate: vatRate,
             description: description || null,
+            show_description: showDescription,
             notes: notes || null,
             terms: terms || null,
             due_date: dueDate || null,
@@ -252,6 +257,7 @@ export function InvoiceBuilder({ business, initial, defaultType, defaultClientId
             total,
             vat_rate: vatRate,
             description: description || null,
+            show_description: showDescription,
             notes: notes || null,
             terms: terms || null,
             due_date: dueDate || null,
@@ -283,6 +289,7 @@ export function InvoiceBuilder({ business, initial, defaultType, defaultClientId
           total,
           vatRate,
           description: description || null,
+          showDescription,
           productDescriptions,
           notes: notes || null,
           terms: terms || null,
@@ -323,6 +330,7 @@ export function InvoiceBuilder({ business, initial, defaultType, defaultClientId
       vatRate={vatRate}
       total={total}
       description={description}
+      showDescription={showDescription}
       productDescriptions={productDescriptions}
       notes={notes}
       terms={terms}
@@ -367,14 +375,22 @@ export function InvoiceBuilder({ business, initial, defaultType, defaultClientId
         </section>
 
         <section className="space-y-1.5">
-          <Label htmlFor="description">Description</Label>
-          <Textarea
-            id="description"
-            rows={2}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Optional summary of the work. Catalog items with their own description show automatically below this."
-          />
+          <div className="flex items-center justify-between">
+            <Label htmlFor="description">Description</Label>
+            <label className="flex items-center gap-2 text-sm text-muted-foreground">
+              Show on invoice
+              <Switch checked={showDescription} onCheckedChange={setShowDescription} />
+            </label>
+          </div>
+          {showDescription && (
+            <Textarea
+              id="description"
+              rows={2}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Optional summary of the work. Catalog items with their own description show automatically below this."
+            />
+          )}
         </section>
 
         <section className="space-y-2">

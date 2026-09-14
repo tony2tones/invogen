@@ -116,6 +116,7 @@ export default function InvoiceDetailPage() {
         total: Number(invoice.total),
         vatRate: Number(invoice.vat_rate),
         description: invoice.description,
+        showDescription: invoice.show_description,
         productDescriptions,
         notes: invoice.notes,
         terms: invoice.terms,
@@ -146,6 +147,7 @@ export default function InvoiceDetailPage() {
         total: Number(invoice.total),
         vatRate: Number(invoice.vat_rate),
         description: invoice.description,
+        showDescription: invoice.show_description,
         productDescriptions,
         notes: invoice.notes,
         terms: invoice.terms,
@@ -243,6 +245,7 @@ export default function InvoiceDetailPage() {
             vatRate={Number(invoice.vat_rate)}
             total={Number(invoice.total)}
             description={invoice.description ?? ''}
+            showDescription={invoice.show_description}
             productDescriptions={productDescriptions}
             notes={invoice.notes ?? ''}
             terms={invoice.terms ?? ''}
