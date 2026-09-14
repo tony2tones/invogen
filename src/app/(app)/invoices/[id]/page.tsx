@@ -42,7 +42,8 @@ export default function InvoiceDetailPage() {
     (async () => {
       setLoading(true);
       const { data: invoiceData, error } = await supabase.from('invoices').select('*').eq('id', params.id).single();
-      if (error || !invoiceData || cancelled) {
+      if (cancelled) return;
+      if (error || !invoiceData) {
         setLoading(false);
         return;
       }

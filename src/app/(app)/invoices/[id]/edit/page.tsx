@@ -20,7 +20,8 @@ export default function EditInvoicePage() {
 
     (async () => {
       const { data: invoice, error } = await supabase.from('invoices').select('*').eq('id', params.id).single();
-      if (error || !invoice || cancelled) {
+      if (cancelled) return;
+      if (error || !invoice) {
         setNotFound(true);
         setLoading(false);
         return;
@@ -34,6 +35,7 @@ export default function EditInvoicePage() {
 
       if (cancelled) return;
 
+      setNotFound(false);
       setBusiness(businessRes.data ?? null);
       setInitial({
         invoiceId: invoice.id,
